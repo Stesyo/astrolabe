@@ -129,7 +129,6 @@ struct Maze maze_load(char *maze_path) {
 			chunks[i].index = chunk_index;
 			chunks[i].height = height;
 			chunk_write(&chunks[i]);
-			chunks[i].height = CHUNK_SIZE;
 
 			chunk_index++;
 		}
@@ -147,22 +146,21 @@ struct Maze maze_load(char *maze_path) {
 
 void maze_free(struct Maze maze) {
 	DIR *temp = opendir("temp");
-	if (temp != NULL) { 
-		struct dirent *chunk;
-		char chunk_file[19];
-		while ((chunk = readdir(temp)) != NULL) {
-			if (chunk->d_name[0] == '.')
-				continue;
-			sprintf(chunk_file, "temp/%s", chunk->d_name);
-			if(remove(chunk_file) != 0) {
-				printf("Could not remove %s\n", chunk_file);
-			}
+	if (temp == NULL) { 
+		printf("Could not open current directory"); 
+	}
+	struct dirent *chunk;
+	char chunk_file[19];
+	while ((chunk = readdir(temp)) != NULL) {
+		if (chunk->d_name[0] == '.')
+			continue;
+		sprintf(chunk_file, "temp/%s", chunk->d_name);
+		if(remove(chunk_file) != 0) {
+			printf("Could not remove %s\n", chunk_file);
 		}
-		closedir(temp);     
-		if(remove("temp") != 0) {
-			printf("Could not remove temp folder\n");
-		}
-	} else {
-		printf("Could not open current directory" ); 
+	}
+	closedir(temp);     
+	if(remove("temp") != 0) {
+		printf("Could not remove temp folder\n");
 	}
 }
