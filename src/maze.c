@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h> 
@@ -18,6 +19,9 @@ int int_digits(int value) {
 }
 
 void chunk_write(struct Chunk *chunk) {
+	if (chunk->index == -1) {
+		return;
+	}
 	char chunk_path[19] = "temp/chunk_000.txt";
 	sprintf(chunk_path + 14 - int_digits(chunk->index), "%i", chunk->index);
 
@@ -27,6 +31,7 @@ void chunk_write(struct Chunk *chunk) {
 		exit(1);
 	}
 
+	fprintf(chunk_file, "%i %i\n", chunk->width, chunk->height);
 	for (int i = 0; chunk->height > i; i++) {
 		fwrite(chunk->field[i], sizeof(char), chunk->width, chunk_file);
 		fwrite("\n", sizeof(char), 1, chunk_file);
@@ -53,7 +58,46 @@ struct Chunk chunk_new(int width, int height) {
 }
 
 struct Chunk chunk_load(int index) {
-	return chunk_new(1, 1);
+	char chunk_path[19] = "temp/chunk_000.txt";
+	sprintf(chunk_path + 14 - int_digits(index), "%i", index);
+
+	FILE *chunk_file = fopen(chunk_path, "r");
+	if (chunk_file == NULL) {
+		printf("Could not oped chunk file: %s\n", chunk_path);
+		exit(1);
+	}
+
+	size_t buffer_len = sizeof(char) * CHUNK_SIZE + 2;
+	char *buffer = malloc(buffer_len);
+
+	getline(&buffer, &buffer_len, chunk_file);
+	
+	int width;
+	int height;
+	sscanf(buffer, "%d %d", &width, &height);
+
+	struct Chunk chunk;
+	chunk.index = index;
+	chunk.width = width;
+	chunk.height = height;
+	chunk.field = malloc(sizeof(char *) * height);
+	if (chunk.field == NULL) {
+		printf("Could not allocate memory for chunk.field\n");
+		exit(1);
+	}
+
+	for (int i = 0; height > i; i++) {
+		chunk.field[i] = malloc(sizeof(char) * width);
+		int len = getline(&buffer, &buffer_len, chunk_file);
+		if (len == -1) {
+			printf("Chunk file ended abruptly: [%i:%i]\n", index, i);
+			exit(1);
+		}
+		memcpy(chunk.field[i], buffer, sizeof(char) * width);
+	}
+	free(buffer);
+
+	return chunk;
 }
 
 struct Maze maze_load(char *maze_path) {
@@ -141,10 +185,17 @@ struct Maze maze_load(char *maze_path) {
 	}
 	free(chunks);
 
+	maze.chunk_belt = malloc(sizeof(struct Chunk) * BELT_SIZE);
+	for (int i = 0; BELT_SIZE > i; i++) {
+		maze.chunk_belt[i].index = -1;
+	}
+
 	return maze;
 }
 
-void maze_free(struct Maze maze) {
+void maze_free(struct Maze *maze) {
+	free(maze->chunk_belt);
+
 	DIR *temp = opendir("temp");
 	if (temp == NULL) { 
 		printf("Could not open current directory"); 
@@ -163,4 +214,32 @@ void maze_free(struct Maze maze) {
 	if(remove("temp") != 0) {
 		printf("Could not remove temp folder\n");
 	}
+}
+
+char *maze_get(struct Maze *maze, int x, int y) {
+	if (x >= maze->width || y >= maze->height || 0 > x || 0 > y) {
+		printf("Access out of bounds: %i, %i", x, y);
+		exit(1);
+	}
+	int required_index = (maze->width + CHUNK_SIZE - 1) / CHUNK_SIZE * (y / CHUNK_SIZE) + x / CHUNK_SIZE;
+	int normalized_x = x - x / CHUNK_SIZE * CHUNK_SIZE;
+	int normalized_y = y - y / CHUNK_SIZE * CHUNK_SIZE;
+
+	for (int i = 0; BELT_SIZE > i; i++) {
+		if (maze->chunk_belt[i].index == required_index && BELT_SIZE - 1 > i) {
+			struct Chunk chunk = maze->chunk_belt[i];
+			memcpy(maze->chunk_belt + i, maze->chunk_belt + 1 + i, sizeof(struct Chunk) * (BELT_SIZE - 1));
+			maze->chunk_belt[BELT_SIZE - 1] = chunk;
+
+			return &maze->chunk_belt[i].field[normalized_y][normalized_x];
+		}
+		else if (maze->chunk_belt[i].index == required_index) {
+			return &maze->chunk_belt[i].field[normalized_y][normalized_x];
+		}
+	}
+
+	chunk_write(&maze->chunk_belt[0]);
+	memcpy(maze->chunk_belt, maze->chunk_belt + 1, sizeof(struct Chunk) * (BELT_SIZE - 1));
+	maze->chunk_belt[BELT_SIZE - 1] = chunk_load(required_index);
+	return &maze->chunk_belt[BELT_SIZE - 1].field[normalized_y][normalized_x];
 }
