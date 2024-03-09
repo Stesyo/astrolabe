@@ -39,22 +39,23 @@ void chunk_write(struct Chunk *chunk) {
 	fclose(chunk_file);
 }
 
-void chunk_free(struct Chunk *chunk) {
-	for (int i = 0; chunk->height > i; i++) {
-		free(chunk->field[i]);
-	}
-	free(chunk->field);
-}
-
 struct Chunk chunk_new(int width, int height) {
 	struct Chunk chunk;
+	chunk.width = width;
+	chunk.height = height;
 	chunk.field = malloc(sizeof(char *) * height);
 	for (int i = 0; height > i; i++) {
 		chunk.field[i] = malloc(sizeof(char) * width);
 	}
-	chunk.width = width;
-	chunk.height = height;
 	return chunk;
+}
+
+void chunk_free(struct Chunk *chunk) {
+	if (chunk->field == NULL) {return;}
+	for (int i = 0; chunk->height > i; i++) {
+		free(chunk->field[i]);
+	}
+	free(chunk->field);
 }
 
 struct Chunk chunk_load(int index) {
@@ -181,6 +182,7 @@ struct Maze maze_load(char *maze_path) {
 	fclose(maze_file);
 
 	for (int i = 0; chunks_len > i; i++) {
+		chunks[i].height = CHUNK_SIZE;
 		chunk_free(&chunks[i]);
 	}
 	free(chunks);
@@ -188,12 +190,16 @@ struct Maze maze_load(char *maze_path) {
 	maze.chunk_belt = malloc(sizeof(struct Chunk) * BELT_SIZE);
 	for (int i = 0; BELT_SIZE > i; i++) {
 		maze.chunk_belt[i].index = -1;
+		maze.chunk_belt[i].field = NULL;
 	}
 
 	return maze;
 }
 
 void maze_free(struct Maze *maze) {
+	for (int i = 0; BELT_SIZE > i; i++) {
+		chunk_free(&maze->chunk_belt[i]);
+	}
 	free(maze->chunk_belt);
 
 	DIR *temp = opendir("temp");
