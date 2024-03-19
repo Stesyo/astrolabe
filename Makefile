@@ -19,4 +19,6 @@ $(BINDIR)/%.o : $(SRCDIR)/%.c
 
 .PHONY: clean
 clean:
+	@rm -f temp/*
+	@rm -fd temp
 	@rm -f $(BINDIR)/*

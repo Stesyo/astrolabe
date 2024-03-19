@@ -1,5 +1,13 @@
 #ifndef MAZE_H
 
+static const char TILE = -128;
+static const char WALL = 64;
+static const char VISITED = 32;
+static const char SRC_UP = 8;
+static const char SRC_RIGHT = 4;
+static const char SRC_DOWN = 2;
+static const char SRC_LEFT = 1;
+
 static const int CHUNK_SIZE = 64;
 static const int BELT_SIZE = 16;
 
@@ -24,4 +32,4 @@ void maze_free(struct Maze *maze);
 
 char *maze_get(struct Maze *maze, int x, int y);
 
-#endif /* ifndef MAZE_H */
+#endif // !MAZE_H
