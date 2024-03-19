@@ -96,6 +96,7 @@ struct Chunk chunk_load(int index) {
 		}
 		memcpy(chunk.field[i], buffer, sizeof(char) * width);
 	}
+	fclose(chunk_file);
 	free(buffer);
 
 	return chunk;
@@ -227,25 +228,23 @@ char *maze_get(struct Maze *maze, int x, int y) {
 		printf("Access out of bounds: %i, %i", x, y);
 		exit(1);
 	}
-	int required_index = (maze->width + CHUNK_SIZE - 1) / CHUNK_SIZE * (y / CHUNK_SIZE) + x / CHUNK_SIZE;
-	int normalized_x = x - x / CHUNK_SIZE * CHUNK_SIZE;
-	int normalized_y = y - y / CHUNK_SIZE * CHUNK_SIZE;
+	// gets index of chunk based on (x, y) coordinates
+	int chunk_index = (maze->width + CHUNK_SIZE - 1) / CHUNK_SIZE * (y / CHUNK_SIZE) + x / CHUNK_SIZE;
+	int relative_x = x - x / CHUNK_SIZE * CHUNK_SIZE;
+	int relative_y = y - y / CHUNK_SIZE * CHUNK_SIZE;
 
 	for (int i = 0; BELT_SIZE > i; i++) {
-		if (maze->chunk_belt[i].index == required_index && BELT_SIZE - 1 > i) {
-			struct Chunk chunk = maze->chunk_belt[i];
-			memcpy(maze->chunk_belt + i, maze->chunk_belt + 1 + i, sizeof(struct Chunk) * (BELT_SIZE - 1));
-			maze->chunk_belt[BELT_SIZE - 1] = chunk;
-
-			return &maze->chunk_belt[i].field[normalized_y][normalized_x];
-		}
-		else if (maze->chunk_belt[i].index == required_index) {
-			return &maze->chunk_belt[i].field[normalized_y][normalized_x];
+		if (maze->chunk_belt[i].index == chunk_index) {
+			if (i > 0) {
+				struct Chunk chunk = maze->chunk_belt[i];
+				memcpy(maze->chunk_belt + 1, maze->chunk_belt, sizeof(struct Chunk) * i - 1);
+				maze->chunk_belt[0] = chunk;
+			}
+			return &maze->chunk_belt[0].field[relative_y][relative_x];
 		}
 	}
-
-	chunk_write(&maze->chunk_belt[0]);
-	memcpy(maze->chunk_belt, maze->chunk_belt + 1, sizeof(struct Chunk) * (BELT_SIZE - 1));
-	maze->chunk_belt[BELT_SIZE - 1] = chunk_load(required_index);
-	return &maze->chunk_belt[BELT_SIZE - 1].field[normalized_y][normalized_x];
+	chunk_write(&maze->chunk_belt[BELT_SIZE - 1]);
+	chunk_free(&maze->chunk_belt[BELT_SIZE - 1]);
+	maze->chunk_belt[0] = chunk_load(chunk_index);
+	return &maze->chunk_belt[0].field[relative_y][relative_x];
 }
