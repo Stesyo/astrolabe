@@ -246,7 +246,7 @@ char *maze_get(struct Maze *maze, int x, int y) {
 
 	chunk_write(&maze->chunk_belt[BELT_SIZE - 1]);
 	chunk_free(&maze->chunk_belt[BELT_SIZE - 1]);
-	memcpy(maze->chunk_belt + 1, maze->chunk_belt, sizeof(struct Chunk) * (BELT_SIZE - 1));
+	memmove(maze->chunk_belt + 1, maze->chunk_belt, sizeof(struct Chunk) * (BELT_SIZE - 1));
 	maze->chunk_belt[0] = chunk_load(chunk_index);
 	return &maze->chunk_belt[0].field[relative_y][relative_x];
 }
