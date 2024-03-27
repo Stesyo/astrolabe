@@ -21,48 +21,52 @@ struct Queue queue_new(int size) {
 void queue_append(struct Queue *q, int value) {
 	if (q->len + 1 >= q->size) {
 		q->size += 128;
-		q->queue = realloc(q->queue, sizeof(int) *q->size);
+		q->queue = realloc(q->queue, sizeof(int) * q->size);
 	}
 
 	q->queue[q->len] = value;
 	q->len++;
 }
 
-void conditional_append(struct Maze *maze, struct Queue *q, int pos, int src, int mov_x, int mov_y) {
+void conditional_append(struct Queue *q, struct Maze *maze, int pos, char flag, int mov_x, int mov_y) {
 	int x = pos % maze->width + mov_x;
 	int y = pos / maze->width + mov_y;
 
-	if (0 > x || 0 > y || x > maze->width || y > maze->height) {
+	if (0 > x || 0 > y || x >= maze->width || y >= maze->height) {
 		return;
 	}
-
+	
 	char *tile = maze_get(maze, x, y);
 	if (*tile & (VISITED | WALL)) {
 		return;
 	}
-	(*tile) += src + VISITED;
+	(*tile) |= flag | VISITED;
 
 	queue_append(q, y * maze->width + x);
 }
 
 void maze_solve(struct Maze *maze) {
-	struct Queue q = queue_new(1024);
-	queue_append(&q, maze->entry);
+	struct Queue q_now = queue_new(128);
+	struct Queue q_next = queue_new(128);
+	queue_append(&q_now, maze->entry);
 
-	struct Queue new_q;
+	struct Queue tmp;
+	while (q_now.len > 0) {
 
-	while (q.len > 0) {
-		printf("%i\n", q.len);
-		new_q = queue_new(1024);
-		for (int i = 0; q.len > i; i++) {
-			int pos = q.queue[i];
-			conditional_append(maze, &new_q, pos, SRC_DOWN, 0, -1);
-			conditional_append(maze, &new_q, pos, SRC_RIGHT, -1, 0);
-			conditional_append(maze, &new_q, pos, SRC_LEFT, 1, 0);
-			conditional_append(maze, &new_q, pos, SRC_UP, 0, 1);
+		for (int i = 0; q_now.len > i; i++) {
+			int pos = q_now.queue[i];
+			conditional_append(&q_next, maze, pos, SRC_DOWN, 0, -1);
+			conditional_append(&q_next, maze, pos, SRC_RIGHT, -1, 0);
+			conditional_append(&q_next, maze, pos, SRC_LEFT, 1, 0);
+			conditional_append(&q_next, maze, pos, SRC_UP, 0, 1);
 		}
-		free(q.queue);
-		q = new_q;
+		
+		tmp = q_now;
+		q_now = q_next;
+		q_next = tmp;
+
+		q_next.len = 0;
 	}
-	free(q.queue);
+	free(q_now.queue);
+	free(q_next.queue);
 }
