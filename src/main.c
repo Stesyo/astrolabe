@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
 	struct Maze maze = maze_load(path);
 
 	maze_solve(&maze);
+	// maze_solution(&maze);
 	maze_free(&maze);
 	return 0;
 }

@@ -48,7 +48,7 @@ void conditional_append(struct Queue *q, struct Maze *maze, int pos, char flag, 
 void maze_solve(struct Maze *maze) {
 	struct Queue q_now = queue_new(128);
 	struct Queue q_next = queue_new(128);
-	queue_append(&q_now, maze->entry);
+	queue_append(&q_now, maze->exit);
 
 	struct Queue tmp;
 	while (q_now.len > 0) {
