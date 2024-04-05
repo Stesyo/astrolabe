@@ -1,4 +1,7 @@
 #ifndef MAZE_H
+#define MAZE_H
+
+#include "chunk.h"
 
 static const char TILE = -128;
 static const char WALL = 64;
@@ -8,8 +11,6 @@ static const char SRC_RIGHT = 4;
 static const char SRC_DOWN = 2;
 static const char SRC_LEFT = 1;
 
-static const int CHUNK_SIZE = 64;
-static const int BELT_SIZE = 16;
 
 enum file_type {
 	unknown,
@@ -25,13 +26,6 @@ struct Maze {
 	enum file_type type;
 	char *path;
 	struct Chunk *chunk_belt;
-};
-
-struct Chunk {
-	int index;
-	int width;
-	int height;
-	char **field;
 };
 
 struct Maze maze_load(char *maze_path);
