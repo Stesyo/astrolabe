@@ -30,8 +30,6 @@ struct Maze {
 
 struct Maze maze_load(char *maze_path);
 
-void maze_solution(struct Maze *maze);
-
 void maze_free(struct Maze *maze);
 
 char *maze_get(struct Maze *maze, int x, int y);

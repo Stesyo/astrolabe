@@ -16,7 +16,6 @@ struct Maze maze_new(void) {
 	maze.exit = -1;
 	maze.type = unknown;
 	maze.path = NULL;
-
         mkdir("temp", 0755);
 
 	maze.chunk_belt = malloc(sizeof(struct Chunk) * BELT_SIZE);
@@ -102,8 +101,6 @@ struct Maze load_bin(char *maze_path) {
 		exit(1);
 	}
 
-	int file_id;
-	char esc;
 	short width; // columns
 	short height; // rows
 	short entry_x;
@@ -111,13 +108,10 @@ struct Maze load_bin(char *maze_path) {
 	short exit_x;
 	short exit_y;
 	int counter;
-	int sol_offset;
-	char sep;
 	char wall;
 	char path;
 
-	fread(&file_id, 4, 1, maze_file);
-	fread(&esc, 1, 1, maze_file);
+	fseek(maze_file, 5, SEEK_CUR);
 	fread(&width, 2, 1, maze_file);
 	fread(&height, 2, 1, maze_file);
 	fread(&entry_x, 2, 1, maze_file);
@@ -126,15 +120,14 @@ struct Maze load_bin(char *maze_path) {
 	fread(&exit_y, 2, 1, maze_file);
 	fseek(maze_file, 12, SEEK_CUR);
 	fread(&counter, 4, 1, maze_file);
-	fread(&sol_offset, 4, 1, maze_file);
-	fread(&sep, 1, 1, maze_file);
+	fseek(maze_file, 5, SEEK_CUR);
 	fread(&wall, 1, 1, maze_file);
 	fread(&path, 1, 1, maze_file);
 
 	struct Maze maze = maze_new();
-	maze.width = width - 2;
-	// maze.height = height;
-	// Coords numberd from 1 ??? why
+	maze.width = width;
+	maze.height = height;
+
 	entry_x--;
 	entry_y--;
 	exit_x--;
@@ -147,13 +140,11 @@ struct Maze load_bin(char *maze_path) {
 	int chunks_x = 0;
 	int chunks_y = 0;
 	char value;
-	char count;
+	unsigned char count;
 	for (int i = 0; counter > i; i++) {
 		fseek(maze_file, 1, SEEK_CUR);
 		fread(&value, 1, 1, maze_file);
 		fread(&count, 1, 1, maze_file);
-		// But count numberd from 0. What?
-		count++;
 		int v = TILE;
 		if (value == wall) {
 			v |=  WALL;
@@ -161,25 +152,25 @@ struct Maze load_bin(char *maze_path) {
 			printf("Invalid value encounterd while parsing binary input\n");
 			exit(1);
 		}
-		for (int c = 0; count > c; c++) {
+
+		for (int c = 0; count >= c; c++) {
 			belt_set(&belt, chunks_x, chunks_y, v);
 			chunks_x++;
-			if (chunks_x == width) {
-				chunks_y++;
-				chunks_x = 0;
-			}
-			if (chunks_y == CHUNK_SIZE) {
-				maze.height += chunks_y;
-				chunks_y = 0;
-				belt_write(&belt, CHUNK_SIZE);
-			}
+		}
+		if (chunks_x > width) {
+			printf("Invalid binary encoding: row spillout\n");
+			exit(1);
+		}
+		if (chunks_x == width) {
+			chunks_y++;
+			chunks_x = 0;
+		}
+		if (chunks_y == CHUNK_SIZE) {
+			belt_write(&belt, CHUNK_SIZE);
+			chunks_y = 0;
 		}
 	}
 	// Save final chunks
-	maze.height += chunks_y;
-	printf("height: %i\n", maze.height);
-	printf("allegedh: %i\n", height);
-	printf("width:%i\n", width);
 	belt_write(&belt, chunks_y);
 
 	fclose(maze_file);
@@ -280,142 +271,3 @@ char *maze_get(struct Maze *maze, int x, int y) {
 	return &maze->chunk_belt[0].field[relative_y][relative_x];
 }
 
-void solution_bin(struct Maze *maze) {
-	FILE *maze_file = fopen(maze->path, "r+");
-	if (maze_file == NULL) {
-		printf("Could not open maze file to write solution: %s\n", maze->path);
-		exit(1);
-	}
-
-	int counter;
-	fseek(maze_file, 29, SEEK_SET);
-	fread(&counter, 4, 1, maze_file);
-	int sol_offset = 40 + counter * 6;
-	fwrite(&sol_offset, 4, 1, maze_file);
-	fseek(maze_file, sol_offset + 6, SEEK_SET);
-	
-	int steps = 0;
-
-	int current = maze->entry;
-	int x = current % maze->width;
-	int y = current / maze->width;
-	char rotation = *maze_get(maze, x, y) & 15;
-	char distance = 0;
-
-	char tile;
-	while (current != maze->exit) {
-		tile = *maze_get(maze, x, y) & 15;
-
-		if (rotation == tile) {
-			distance++;
-		}
-		else {
-			distance--;
-			fwrite(&rotation, 1, 1, maze_file);
-			fwrite(&distance, 1, 1, maze_file);
-			rotation = tile;
-			distance = 1;
-			steps++;
-		}
-
-		switch (tile) {
-			case SRC_UP:
-				y--;
-			break;
-			case SRC_RIGHT:
-				x++;
-			break;
-			case SRC_DOWN:
-				y++;
-			break;
-			case SRC_LEFT:
-				x--;
-			break;
-		}
-		current = y * maze->width + x;
-
-	}
-	distance--;
-	fwrite(&rotation, 1, 1, maze_file);
-	fwrite(&distance, 1, 1, maze_file);
-	steps++;
-	
-	int identifier = 0x52524243;
-
-	fseek(maze_file, sol_offset, SEEK_SET);
-	fwrite(&identifier, 4, 1, maze_file);
-	fwrite(&steps, 1, 1, maze_file);
-	fclose(maze_file);
-}
-
-void rotate(char *rotation, char target) {
-	if (*rotation == SRC_UP && target == SRC_LEFT) {
-		printf("TURN LEFT\n");
-		*rotation = SRC_LEFT;
-	} else if (*rotation == SRC_LEFT && target == SRC_UP) {
-		printf("TURN RIGHT\n");
-		*rotation = SRC_UP;
-	} else if (*rotation << 1 == target) {
-		printf("TURN LEFT\n");
-		*rotation <<= 1;
-	} else if (*rotation >> 1 == target) {
-		printf("TURN RIGHT\n");
-		*rotation >>= 1;
-	}
-}
-
-void solution_txt(struct Maze *maze) {
-	int current = maze->entry;
-	int x = current % maze->width;
-	int y = current / maze->width;
-	char rotation = *maze_get(maze, x, y) & 15;
-	char distance = 0;
-
-	char tile;
-	printf("START\n");
-	while (current != maze->exit) {
-		tile = *maze_get(maze, x, y) & 15;
-		if ((tile) == rotation) {
-			distance++;
-		} else {
-			printf("FORWARD %i\n", distance);
-			distance = 1;
-			rotate(&rotation, tile);
-		}
-
-		switch (rotation) {
-			case SRC_UP:
-				y--;
-			break;
-			case SRC_RIGHT:
-				x++;
-			break;
-			case SRC_DOWN:
-				y++;
-			break;
-			case SRC_LEFT:
-				x--;
-			break;
-		}
-		current = y * maze->width + x;
-	
-	}
-	printf("FORWARD %i\n", distance);
-	printf("STOP\n");
-}
-
-void maze_solution(struct Maze *maze) {
-	switch (maze->type) {
-		case unknown:
-			printf("Invalid maze type\n");
-			exit(1);
-			break;
-		case bin:
-			solution_bin(maze);
-			break;
-		case txt:
-			solution_txt(maze);
-			break;
-	}
-
-}
