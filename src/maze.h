@@ -3,13 +3,13 @@
 
 #include "chunk.h"
 
-static const char TILE = -128;
-static const char WALL = 64;
-static const char VISITED = 32;
-static const char SRC_UP = 8;
-static const char SRC_RIGHT = 4;
-static const char SRC_DOWN = 2;
-static const char SRC_LEFT = 1;
+#define TILE -128
+#define WALL 64
+#define VISITED 32
+#define SRC_UP 8
+#define SRC_RIGHT 4
+#define SRC_DOWN 2
+#define SRC_LEFT 1
 
 
 enum file_type {

@@ -1,8 +1,8 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 
-static const int CHUNK_SIZE = 64;
-static const int BELT_SIZE = 16;
+#define CHUNK_SIZE 64
+#define BELT_SIZE 16
 
 struct Chunk {
 	int index;
