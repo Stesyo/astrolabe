@@ -23,10 +23,7 @@ struct Maze maze_new(void) {
 		maze.chunk_belt[i].index = -1;
 		maze.chunk_belt[i].field = NULL;
 	}
-	fclose(chunk_file);
-	free(buffer);
-
-	return chunk;
+	return maze;
 }
 
 struct Maze load_txt(char *maze_path) {
