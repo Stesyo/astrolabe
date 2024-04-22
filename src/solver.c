@@ -86,9 +86,9 @@ void solution_bin(struct Maze *maze)
 	int counter;
 	fseek(maze_file, 29, SEEK_SET);
 	fread(&counter, 4, 1, maze_file);
-	int sol_offset = 40 + counter * 6;
+	int sol_offset = 40 + counter * 3;
 	fwrite(&sol_offset, 4, 1, maze_file);
-	fseek(maze_file, sol_offset + 6, SEEK_SET);
+	fseek(maze_file, sol_offset + 8, SEEK_SET);
 	
 	int steps = 0;
 
@@ -140,7 +140,7 @@ void solution_bin(struct Maze *maze)
 
 	fseek(maze_file, sol_offset, SEEK_SET);
 	fwrite(&identifier, 4, 1, maze_file);
-	fwrite(&steps, 1, 1, maze_file);
+	fwrite(&steps, 4, 1, maze_file);
 	fclose(maze_file);
 }
 
