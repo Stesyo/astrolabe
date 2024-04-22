@@ -107,7 +107,22 @@ void solution_bin(struct Maze *maze)
 		}
 		else {
 			distance--;
-			fwrite(&rotation, 1, 1, maze_file);
+                        char rotation_char = ' ';
+                        switch (rotation) {
+                        case SRC_UP:
+                                rotation_char = 'N';
+                                break;
+                        case SRC_RIGHT:
+                                rotation_char = 'E';
+                                break;
+                        case SRC_DOWN:
+                                rotation_char = 'S';
+                                break;
+                        case SRC_LEFT:
+                                rotation_char = 'W';
+                                break;
+                        }
+			fwrite(&rotation_char, 1, 1, maze_file);
 			fwrite(&distance, 1, 1, maze_file);
 			rotation = tile;
 			distance = 1;
