@@ -28,7 +28,7 @@ QueueNode* createNode(Position data) {
     return newNode;
 }
 
-Queue* createQueue() {
+Queue* createQueue(void) {
     Queue* queue = (Queue*)malloc(sizeof(Queue));
     queue->front = queue->rear = NULL;
     queue->size = 0;

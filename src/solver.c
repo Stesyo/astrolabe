@@ -10,7 +10,8 @@ struct Queue {
 	int *queue;
 };
 
-struct Queue queue_new(int size) {
+struct Queue queue_new(int size)
+{
 	struct Queue q;
 	q.size = size;
 	q.len = 0;
@@ -18,7 +19,8 @@ struct Queue queue_new(int size) {
 	return q;
 }
 
-void queue_append(struct Queue *q, int value) {
+void queue_append(struct Queue *q, int value)
+{
 	if (q->len + 1 >= q->size) {
 		q->size += 128;
 		q->queue = realloc(q->queue, sizeof(int) * q->size);
@@ -28,7 +30,8 @@ void queue_append(struct Queue *q, int value) {
 	q->len++;
 }
 
-void conditional_append(struct Queue *q, struct Maze *maze, int pos, char flag, int mov_x, int mov_y) {
+void conditional_append(struct Queue *q, struct Maze *maze, int pos, char flag, int mov_x, int mov_y)
+{
 	int x = pos % maze->width + mov_x;
 	int y = pos / maze->width + mov_y;
 
@@ -45,7 +48,8 @@ void conditional_append(struct Queue *q, struct Maze *maze, int pos, char flag, 
 	queue_append(q, y * maze->width + x);
 }
 
-void maze_solve(struct Maze *maze) {
+void maze_solve(struct Maze *maze)
+{
 	struct Queue q_now = queue_new(128);
 	struct Queue q_next = queue_new(128);
 	queue_append(&q_now, maze->exit);
@@ -71,7 +75,8 @@ void maze_solve(struct Maze *maze) {
 	free(q_next.queue);
 }
 
-void solution_bin(struct Maze *maze) {
+void solution_bin(struct Maze *maze)
+{
 	FILE *maze_file = fopen(maze->path, "r+");
 	if (maze_file == NULL) {
 		printf("Could not open maze file to write solution: %s\n", maze->path);
@@ -110,18 +115,18 @@ void solution_bin(struct Maze *maze) {
 		}
 
 		switch (tile) {
-			case SRC_UP:
-				y--;
-			break;
-			case SRC_RIGHT:
-				x++;
-			break;
-			case SRC_DOWN:
-				y++;
-			break;
-			case SRC_LEFT:
-				x--;
-			break;
+                case SRC_UP:
+                        y--;
+                        break;
+                case SRC_RIGHT:
+                        x++;
+                        break;
+                case SRC_DOWN:
+                        y++;
+                        break;
+                case SRC_LEFT:
+                        x--;
+                        break;
 		}
 		current = y * maze->width + x;
 
@@ -139,7 +144,8 @@ void solution_bin(struct Maze *maze) {
 	fclose(maze_file);
 }
 
-void rotate(char *rotation, char target) {
+void rotate(char *rotation, char target)
+{
 	if (*rotation == SRC_UP && target == SRC_LEFT) {
 		printf("TURN LEFT\n");
 		*rotation = SRC_LEFT;
@@ -155,7 +161,8 @@ void rotate(char *rotation, char target) {
 	}
 }
 
-void solution_txt(struct Maze *maze) {
+void solution_txt(struct Maze *maze)
+{
 	int current = maze->entry;
 	int x = current % maze->width;
 	int y = current / maze->width;
@@ -175,18 +182,18 @@ void solution_txt(struct Maze *maze) {
 		}
 
 		switch (rotation) {
-			case SRC_UP:
-				y--;
-			break;
-			case SRC_RIGHT:
-				x++;
-			break;
-			case SRC_DOWN:
-				y++;
-			break;
-			case SRC_LEFT:
-				x--;
-			break;
+                case SRC_UP:
+                        y--;
+                        break;
+                case SRC_RIGHT:
+                        x++;
+                        break;
+                case SRC_DOWN:
+                        y++;
+                        break;
+                case SRC_LEFT:
+                        x--;
+                        break;
 		}
 		current = y * maze->width + x;
 	
@@ -195,17 +202,18 @@ void solution_txt(struct Maze *maze) {
 	printf("STOP\n");
 }
 
-void maze_solution(struct Maze *maze) {
+void maze_solution(struct Maze *maze)
+{
 	switch (maze->type) {
-		case unknown:
-			printf("Invalid maze type\n");
-			exit(1);
-			break;
-		case bin:
-			solution_bin(maze);
-			break;
-		case txt:
-			solution_txt(maze);
-			break;
+        case unknown:
+                printf("Invalid maze type\n");
+                exit(1);
+                break;
+        case bin:
+                solution_bin(maze);
+                break;
+        case txt:
+                solution_txt(maze);
+                break;
 	}
 }

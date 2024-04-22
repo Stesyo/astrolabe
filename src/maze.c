@@ -8,7 +8,8 @@
 #include "chunk.h"
 
 
-struct Maze maze_new(void) {
+struct Maze maze_new(void)
+{
 	struct Maze maze;
 	maze.width = 0;
 	maze.height = 0;
@@ -26,7 +27,8 @@ struct Maze maze_new(void) {
 	return maze;
 }
 
-struct Maze load_txt(char *maze_path) {
+struct Maze load_txt(char *maze_path)
+{
 	FILE *maze_file = fopen(maze_path, "r");
 	if (maze_file == NULL) {
 		printf("Could not open maze file: %s\n", maze_path);
@@ -65,18 +67,18 @@ struct Maze load_txt(char *maze_path) {
 			for (int c = 0; length > c; c++) {
 				char tile = TILE;
 				switch (buffer[c]) {
-					case 'X':
-						tile += WALL;
-					break;
-					case 'P':
-						maze.entry = maze.height * maze.width + c;
-					break;
-					case 'K':
-						maze.exit = maze.height * maze.width + c;
-					break;
-					case '\n':
-						printf("not gut\n");
-					break;
+                                case 'X':
+                                        tile += WALL;
+                                        break;
+                                case 'P':
+                                        maze.entry = maze.height * maze.width + c;
+                                        break;
+                                case 'K':
+                                        maze.exit = maze.height * maze.width + c;
+                                        break;
+                                case '\n':
+                                        printf("not gut\n");
+                                        break;
 				}
 				belt_set(&belt, c, i, tile);
 			}
@@ -94,7 +96,8 @@ struct Maze load_txt(char *maze_path) {
 
 }
 
-struct Maze load_bin(char *maze_path) {
+struct Maze load_bin(char *maze_path)
+{
 	FILE *maze_file = fopen(maze_path, "rb");
 	if (maze_file == NULL) {
 		printf("Could not open maze file: %s\n", maze_path);
@@ -179,7 +182,8 @@ struct Maze load_bin(char *maze_path) {
 	return maze;
 }
 
-enum file_type get_type(char *maze_path) {
+enum file_type get_type(char *maze_path)
+{
 	int last_dot = 0;
 	int i = 0;
 	while (maze_path[i] != '\0') {
@@ -198,26 +202,28 @@ enum file_type get_type(char *maze_path) {
 	}
 }
 
-struct Maze maze_load(char *maze_path) {
+struct Maze maze_load(char *maze_path)
+{
 	enum file_type type = get_type(maze_path);
 	struct Maze maze;
 	switch (type) {
-		case unknown:
-			printf("Invalid maze type\n");
-			exit(1);
-		case bin:
-			maze = load_bin(maze_path);
-			break;
-		case txt:
-			maze = load_txt(maze_path);
-			break;
+        case unknown:
+                printf("Invalid maze type\n");
+                exit(1);
+        case bin:
+                maze = load_bin(maze_path);
+                break;
+        case txt:
+                maze = load_txt(maze_path);
+                break;
 	}
 	maze.path = maze_path;
 	maze.type = type;
 	return maze;
 }
 
-void maze_free(struct Maze *maze) {
+void maze_free(struct Maze *maze)
+{
 	for (int i = 0; BELT_SIZE > i; i++) {
 		chunk_free(&maze->chunk_belt[i]);
 	}
@@ -243,7 +249,8 @@ void maze_free(struct Maze *maze) {
 	}
 }
 
-char *maze_get(struct Maze *maze, int x, int y) {
+char *maze_get(struct Maze *maze, int x, int y)
+{
 	if (x >= maze->width || y >= maze->height || 0 > x || 0 > y) {
 		printf("Access out of bounds: %i, %i", x, y);
 		exit(1);

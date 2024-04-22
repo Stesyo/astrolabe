@@ -4,7 +4,8 @@
 
 #include "chunk.h"
 
-int int_digits(int value) {
+int int_digits(int value)
+{
 	if (value == 0) {
                 return 1;
         }
@@ -16,7 +17,8 @@ int int_digits(int value) {
 	return digits;
 }
 
-struct Chunk chunk_new(int width, int height) {
+struct Chunk chunk_new(int width, int height)
+{
 	struct Chunk chunk;
 	chunk.width = width;
 	chunk.height = height;
@@ -27,7 +29,8 @@ struct Chunk chunk_new(int width, int height) {
 	return chunk;
 }
 
-struct Chunk chunk_load(int index) {
+struct Chunk chunk_load(int index)
+{
 	char chunk_path[19] = "temp/chunk_000.txt";
 	sprintf(chunk_path + 14 - int_digits(index), "%i", index);
 
@@ -71,7 +74,8 @@ struct Chunk chunk_load(int index) {
 	return chunk;
 }
 
-void chunk_free(struct Chunk *chunk) {
+void chunk_free(struct Chunk *chunk)
+{
 	if (chunk->field == NULL) {return;}
 	for (int i = 0; chunk->height > i; i++) {
 		free(chunk->field[i]);
@@ -79,7 +83,8 @@ void chunk_free(struct Chunk *chunk) {
 	free(chunk->field);
 }
 
-void chunk_write(struct Chunk *chunk) {
+void chunk_write(struct Chunk *chunk)
+{
 	if (chunk->index == -1) {
 		return;
 	}
@@ -101,7 +106,8 @@ void chunk_write(struct Chunk *chunk) {
 }
 
 
-struct Belt belt_new(int width, int height) {
+struct Belt belt_new(int width, int height)
+{
 	struct Belt belt;
 
 	int length = (width + CHUNK_SIZE - 1) / CHUNK_SIZE;
@@ -119,7 +125,8 @@ struct Belt belt_new(int width, int height) {
 	return belt;
 }
 
-void belt_free(struct Belt *belt) {
+void belt_free(struct Belt *belt)
+{
 	for (int i = 0; belt->length > i; i++) {
 		belt->chunks[i].height = belt->height;
 		chunk_free(&belt->chunks[i]);
@@ -127,7 +134,8 @@ void belt_free(struct Belt *belt) {
 	free(belt->chunks);
 }
 
-void belt_write(struct Belt *belt, int height) {
+void belt_write(struct Belt *belt, int height)
+{
 	for (int i = 0; belt->length > i; i++) {
 		belt->chunks[i].height = height;
 		chunk_write(&belt->chunks[i]);
@@ -136,6 +144,7 @@ void belt_write(struct Belt *belt, int height) {
 
 }
 
-void belt_set(struct Belt *belt, int x, int y, int value) {
+void belt_set(struct Belt *belt, int x, int y, int value)
+{
 	belt->chunks[x / CHUNK_SIZE].field[y][x % CHUNK_SIZE] = value;
 }
